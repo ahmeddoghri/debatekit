@@ -12,20 +12,23 @@
 > that debates for two rounds hits 80%.** Same underlying skill level, just
 > more voices and a chance to reconsider: `python -m debatekit.eval`.
 
-Ask one model a hard question and you get one shot at the truth, plus whatever
-blind spot that particular model happens to carry that day. The multiagent
-debate idea (Du et al., 2023) is the same fix humans figured out a long time
-ago: a jury usually beats a single juror, not because any one juror is smarter,
-but because bad independent guesses rarely agree with each other while good
-ones converge, and a room full of people who can hear each other's reasoning
-tends to end up closer to right.
+Ask one model a hard question and you get one shot at the truth, plus
+whatever blind spot that particular model happens to be carrying around that
+day like a grudge. The multiagent debate idea (Du et al., 2023) is the same
+fix humans figured out a long time ago, we just called it a jury instead of
+an ensemble method: a jury usually beats a single juror, not because any one
+juror is smarter, but because bad independent guesses rarely agree with each
+other while good ones converge, and a room full of people who can hear each
+other's reasoning tends to end up closer to right, assuming nobody's just
+loud.
 
-debatekit simulates that dynamic without a real model. Each agent is a noisy
-classifier with its own accuracy; debate is rounds of "see what the group
-currently thinks, maybe update toward it" followed by a final vote. It ships a
-benchmark comparing a lone agent, a one-shot majority vote with no revision,
-and full multi-round debate, so the value of each layer is a number, not a
-hunch.
+debatekit simulates that dynamic without a real model, which is refreshing
+in a field where every demo needs an API key before it'll say hello. Each
+agent is a noisy classifier with its own accuracy; debate is rounds of "see
+what the group currently thinks, maybe update toward it" followed by a final
+vote. It ships a benchmark comparing a lone agent, a one-shot majority vote
+with no revision, and full multi-round debate, so the value of each layer is
+a number, not a hunch someone had after a conference talk.
 
 ---
 
@@ -86,12 +89,14 @@ round 1..R: each agent sees every OTHER agent's current answer
 final: majority vote over the last round's answers
 ```
 
-The persuasion parameter is the interesting knob. Turn it to 1.0 and the panel
-converges instantly to whatever the first-round plurality happened to be,
-which can lock in a wrong answer just as fast as a right one. Turn it to 0.0
-and debate does nothing, it is just an expensive way to run a vote. The
-default of 0.6 models agents that take the group seriously without being
-pushovers, which is closer to how a real multiagent debate protocol behaves.
+The persuasion parameter is the interesting knob, the one that decides
+whether your panel is a jury or a mob. Turn it to 1.0 and the panel converges
+instantly to whatever the first-round plurality happened to be, which locks
+in a wrong answer exactly as fast as a right one, groupthink with extra
+steps. Turn it to 0.0 and debate does nothing, it's just an expensive way to
+run a vote. The default of 0.6 models agents that take the group seriously
+without being pushovers, which is closer to how a real multiagent debate
+protocol behaves, and closer to how you'd want an actual jury to behave too.
 
 ## Tests
 
