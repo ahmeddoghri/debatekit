@@ -3,7 +3,7 @@
 **Get a group of noisy agents to a better answer than any one of them.**
 
 ![CI](https://github.com/ahmeddoghri/debatekit/actions/workflows/ci.yml/badge.svg)
-![tests](https://img.shields.io/badge/tests-10%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-19%20passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![deps](https://img.shields.io/badge/runtime%20deps-none-success)
 ![license](https://img.shields.io/badge/license-MIT-black)
@@ -11,6 +11,14 @@
 > **A single agent at 55% accuracy gets there 57% of the time. A panel of five
 > that debates for two rounds hits 80%.** Same underlying skill level, just
 > more voices and a chance to reconsider: `python -m debatekit.eval`.
+>
+> **Update:** the panel jump (57%→79%) is real and huge. The extra "+1pt
+> from debate" on top of it is not: it's measured over 20 trials, and
+> resampling that same 20-trial size across ten equally valid windows
+> swings from -3.8pt to +1.3pt. Run it properly (2000+ trials, standard
+> errors reported) and the true delta from adding debate rounds never
+> once clears one standard error, at any accuracy tested.
+> `python -m debatekit.eval_v2`.
 
 Ask one model a hard question and you get one shot at the truth, plus
 whatever blind spot that particular model happens to be carrying around that
@@ -46,13 +54,15 @@ debate benchmark: 12 hard questions, panel of 5 agents at 55% individual accurac
      debate_2_rounds  193/240 =   80%
 ```
 
-Twenty trials per question, so the numbers are stable, not one lucky run. The
-big jump is going from one agent to a panel at all: 57% to 79%, just from
+The big jump is going from one agent to a panel at all: 57% to 79%, just from
 independent votes with zero communication, which is the classic wisdom-of-
-crowds effect. Letting the panel see each other's answers and revise for two
-rounds buys another point on top of that. Neither number is inflated; the
-distractors in the question set are plausible wrong answers, not random noise,
-so voting has to do real work to converge on the truth.
+crowds effect, and it's a large, reliable result. The distractors in the
+question set are plausible wrong answers, not random noise, so voting has to
+do real work to converge on the truth.
+
+The extra point from letting the panel revise for two rounds is a different
+story: twenty trials is not actually enough to call that stable. [See below](#twenty-trials-is-not-enough-to-trust-the-debate-rounds-number)
+before you take it at face value.
 
 ## Install
 
@@ -98,10 +108,54 @@ run a vote. The default of 0.6 models agents that take the group seriously
 without being pushovers, which is closer to how a real multiagent debate
 protocol behaves, and closer to how you'd want an actual jury to behave too.
 
+## Twenty trials is not enough to trust the debate-rounds number
+
+I went back and checked how stable the "+1pt from debate" claim actually
+is. Twenty trials per question at 55% accuracy, resampled across ten
+different, equally valid 20-trial windows instead of the one the README
+happens to quote:
+
+```
++1.2p, +0.8p, -0.4p, +0.0p, +0.4p, -0.4p, +1.2p, +0.0p, -3.8p, -0.8p
+```
+
+The published +1.3p is one draw from a spread that swings by more than 5
+points and includes deltas well into negative territory. That is not a
+stable measurement, it is noise with a headline attached.
+
+```bash
+python -m debatekit.eval_v2
+```
+```
+  accuracy      vote    debate     delta      SE    significant?
+      0.35     42.3%     42.2%    -0.03p   0.45p              no
+      0.40     50.9%     50.8%    -0.03p   0.46p              no
+      0.45     59.1%     59.2%    +0.17p   0.45p              no
+      0.50     67.3%     67.2%    -0.03p   0.43p              no
+      0.55     74.6%     74.6%    -0.02p   0.40p              no
+      0.60     81.1%     81.2%    +0.10p   0.36p              no
+```
+
+At 2000 trials per point, backed by 12,000-trial checks across the same
+range, the delta between a plain independent vote and two rounds of
+debate never once clears one standard error, at any accuracy tested. The
+honest reading: in this simulation, letting the panel revise for two
+rounds after voting does not measurably beat voting alone. The real,
+load-bearing effect is the panel itself, one agent to five independent
+votes is a 20+ point jump, five to ten times the noise floor, not the
+extra debate rounds on top of it.
+
+`debatekit/eval_v2.py` doesn't change `debate.py` or `agents.py` at all;
+this isn't a code bug, the simulation does exactly what it says. It's a
+sample-size problem in how the headline number was measured. The original
+`python -m debatekit.eval` output is untouched and still reproduces the
+exact published table; `eval_v2` is the properly-powered companion
+measurement, not a replacement.
+
 ## Tests
 
 ```bash
-pip install pytest && pytest -q      # 10 passing
+pip install pytest && pytest -q      # 19 passing
 ```
 
 ## License

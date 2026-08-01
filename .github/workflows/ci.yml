@@ -28,3 +28,5 @@ jobs:
         run: python examples/quickstart.py
       - name: Run benchmark
         run: python -m debatekit.eval
+      - name: Run statistical-power check
+        run: python -m debatekit.eval_v2
